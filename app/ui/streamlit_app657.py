@@ -298,6 +298,16 @@ with tab1:
                 })
                 st.session_state.last_mode = response_mode
 
+                # Record chat interaction in RAGAS evaluation results in a background thread to keep UI responsive
+                try:
+                    import threading
+                    from app.evaluation.evaluator import record_interaction
+                    thread = threading.Thread(target=record_interaction, args=(prompt, assistant_message))
+                    thread.daemon = True
+                    thread.start()
+                except Exception as eval_err:
+                    logger.error(f"Failed to trigger Ragas evaluation thread: {eval_err}")
+
             except Exception as e:
                 error_msg = f"❌ Error: {str(e)}"
                 st.session_state.messages.append({"role": "assistant", "content": error_msg})
