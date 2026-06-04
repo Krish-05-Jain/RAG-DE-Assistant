@@ -215,7 +215,7 @@ class Orchestrator:
     """Stateful orchestrator maintaining in-session conversation history."""
 
     def __init__(self):
-        self.history: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        self.history: list[dict] = [{"role": "system", "content": _build_system_prompt()}]
         self.tool_calls_log: list[str] = []
 
     def chat(self, user_message: str) -> dict:
@@ -337,5 +337,5 @@ class Orchestrator:
 
     def reset(self):
         """Reset conversation history (new session)."""
-        self.history = [{"role": "system", "content": SYSTEM_PROMPT}]
+        self.history = [{"role": "system", "content": _build_system_prompt()}]
         self.tool_calls_log = []

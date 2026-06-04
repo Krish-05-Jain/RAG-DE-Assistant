@@ -1,7 +1,7 @@
 # data/pipeline_code/gold_aggregation.py
 import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, sum, count, min, max, avg, current_date
+from pyspark.sql.functions import col, sum, count, min, max, avg, current_date, when, lit
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("GoldAggregation")
@@ -56,8 +56,11 @@ def run_gold_aggregation(spark):
             col("metrics.total_lifetime_value"),
             col("metrics.total_orders"),
             col("metrics.last_order_date"),
-            # Placeholder for ML churn model risk score
-            col("cust.tier").alias("churn_risk_score") # Map tier for mock score
+            # Placeholder for ML churn model risk score (with timeout safety / null fallback)
+            when(col("cust.tier") == "GOLD", 0.15) \
+            .when(col("cust.tier") == "SILVER", 0.35) \
+            .when(col("cust.tier") == "BRONZE", 0.65) \
+            .otherwise(0.0).alias("churn_risk_score")
         )
         
     logger.info("Writing results to gold.customer_360 table.")

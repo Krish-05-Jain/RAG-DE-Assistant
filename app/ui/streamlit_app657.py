@@ -186,6 +186,19 @@ pipeline_service = PipelineService()
 catalogue_explorer = DataCatalogueExplorer()
 quality_agent = QualityAgent()
 
+# Automatically bootstrap/ingest document chunks if ChromaDB is empty (prevents first-chat failure after deploy)
+try:
+    from app.rag.vectorstore import get_chroma_client, get_or_create_collection
+    from app.rag.ingestion import run_ingestion
+    _chroma_client = get_chroma_client()
+    _collection = get_or_create_collection(_chroma_client)
+    if _collection.count() == 0:
+        logger.warning("Vector database is empty! Auto-triggering document ingestion on startup...")
+        run_ingestion()
+        logger.warning("Auto-ingestion completed successfully.")
+except Exception as e:
+    logger.error(f"Failed during auto-ingestion database check: {e}")
+
 # ============================================================================
 # HERO BANNER
 # ============================================================================
