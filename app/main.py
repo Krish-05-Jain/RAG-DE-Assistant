@@ -5,6 +5,9 @@ Entry point – now powered by the new UI (app/ui/streamlit_app657.py).
 
 Rollback:  streamlit run app/main_v1_backup.py
 """
+import os
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 import sys
 from pathlib import Path
 
