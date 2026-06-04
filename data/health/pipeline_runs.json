@@ -1,4 +1,5 @@
 [
+  {"pipeline_id": "silver_events", "run_time": "2026-05-10T12:15:00", "status": "success", "duration_sec": 298, "row_count": 395000, "completeness_pct": 100.0, "error_message": null},
   {"pipeline_id": "bronze_salesforce", "run_time": "2026-05-10T11:45:00", "status": "success", "duration_sec": 245, "row_count": 12500, "completeness_pct": 99.8, "error_message": null},
   {"pipeline_id": "bronze_erp_orders", "run_time": "2026-05-10T02:05:00", "status": "success", "duration_sec": 1820, "row_count": 185000, "completeness_pct": 100.0, "error_message": null},
   {"pipeline_id": "bronze_kafka_events", "run_time": "2026-05-10T11:59:00", "status": "running", "duration_sec": 60, "row_count": 0, "completeness_pct": null, "error_message": null},

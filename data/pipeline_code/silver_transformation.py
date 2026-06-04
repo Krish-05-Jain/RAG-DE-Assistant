@@ -1,7 +1,7 @@
 # data/pipeline_code/silver_transformation.py
 import logging
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, sha2, concat_ws, lit, current_timestamp, substring
+from pyspark.sql.functions import col, when, sha2, concat_ws, lit, current_timestamp, substring, row_number
 from pyspark.sql.window import Window
 
 logging.basicConfig(level=logging.INFO)
@@ -70,6 +70,33 @@ def run_silver_transformation(spark):
         
     logger.info("Deduplicated ERP orders using composite key (order_id, source_system).")
     final_orders.write.format("delta").mode("overwrite").saveAsTable("silver.orders")
+
+    # ── 5. Transform & Deduplicate Kafka Events (handle null user_id) ───────────
+    logger.info("Loading and processing raw events from bronze.kafka_events.")
+    raw_events = spark.read.table("bronze.kafka_events")
+
+    # Clean null user_ids before performing joins or writing (fixes NPE)
+    cleaned_events = raw_events.filter(col("user_id").isNotNull())
+
+    # Deduplicate events on (event_id, event_timestamp)
+    window_spec_events = Window.partitionBy("event_id", "event_timestamp").orderBy(col("_ingested_at").desc())
+    deduped_events = cleaned_events \
+        .withColumn("rn", row_number().over(window_spec_events)) \
+        .filter(col("rn") == 1) \
+        .drop("rn")
+
+    # Map user_id to customer_id and select target schema
+    final_events = deduped_events.select(
+        col("event_id"),
+        col("event_type"),
+        col("user_id").alias("customer_id"),
+        col("event_timestamp").cast("date").alias("event_date"),
+        col("event_timestamp"),
+        lit(None).cast("string").alias("session_id")
+    )
+
+    logger.info("Saving cleaned, deduplicated events to silver.events Delta table.")
+    final_events.write.format("delta").mode("overwrite").saveAsTable("silver.events")
 
 if __name__ == "__main__":
     spark = get_spark()
