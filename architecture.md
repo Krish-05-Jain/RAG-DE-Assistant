@@ -2,7 +2,7 @@
 
 This document details the architecture flow of the **RAG-Powered Data Engineering Assistant**, custom-built to run locally with **Ollama** as the core LLM orchestration engine.
 
-![Technical Architecture Flow Diagram](/Users/as-mac-1229/.gemini/antigravity-ide/brain/46105879-86f2-4b19-83a2-d65e675d64e3/architecture_flow_ollama_1780565444121.png)
+![Technical Architecture Flow Diagram](/Users/as-mac-1229/.gemini/antigravity-ide/brain/46105879-86f2-4b19-83a2-d65e675d64e3/architecture_flow_ollama_white_1780565520894.png)
 
 ---
 
