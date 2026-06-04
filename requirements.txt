@@ -25,5 +25,3 @@ opentelemetry-exporter-otlp>=1.25.0
 opentelemetry-proto>=1.25.0
 protobuf>=4.25.0
 pyspark>=3.5.0
-
-
