@@ -1,0 +1,22 @@
+[
+  {"pipeline_id": "bronze_salesforce", "run_time": "2026-05-10T11:45:00", "status": "success", "duration_sec": 245, "row_count": 12500, "completeness_pct": 99.8, "error_message": null},
+  {"pipeline_id": "bronze_erp_orders", "run_time": "2026-05-10T02:05:00", "status": "success", "duration_sec": 1820, "row_count": 185000, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "bronze_kafka_events", "run_time": "2026-05-10T11:59:00", "status": "running", "duration_sec": 60, "row_count": 0, "completeness_pct": null, "error_message": null},
+  {"pipeline_id": "silver_orders", "run_time": "2026-05-10T11:30:00", "status": "success", "duration_sec": 380, "row_count": 42000, "completeness_pct": 99.5, "error_message": null},
+  {"pipeline_id": "silver_customers", "run_time": "2026-05-10T11:20:00", "status": "success", "duration_sec": 620, "row_count": 8000, "completeness_pct": 98.9, "error_message": null},
+  {"pipeline_id": "silver_events", "run_time": "2026-05-10T11:55:00", "status": "failed", "duration_sec": 90, "row_count": 0, "completeness_pct": 0.0, "error_message": "NullPointerException at silver.events line 42: user_id column unexpectedly null"},
+  {"pipeline_id": "gold_daily_revenue", "run_time": "2026-05-10T07:15:00", "status": "success", "duration_sec": 540, "row_count": 1440, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "gold_customer_360", "run_time": "2026-05-10T06:45:00", "status": "partial", "duration_sec": 4800, "row_count": 1850000, "completeness_pct": 92.5, "error_message": "Churn score model timed out for 150K customers — scores set to null"},
+  {"pipeline_id": "gold_pipeline_kpis", "run_time": "2026-05-10T11:30:00", "status": "success", "duration_sec": 120, "row_count": 450, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "bronze_salesforce", "run_time": "2026-05-10T11:30:00", "status": "success", "duration_sec": 238, "row_count": 11800, "completeness_pct": 99.7, "error_message": null},
+  {"pipeline_id": "silver_events", "run_time": "2026-05-10T11:15:00", "status": "success", "duration_sec": 310, "row_count": 380000, "completeness_pct": 99.9, "error_message": null},
+  {"pipeline_id": "silver_events", "run_time": "2026-05-10T11:00:00", "status": "failed", "duration_sec": 45, "row_count": 0, "completeness_pct": 0.0, "error_message": "Connection reset by Kafka broker — broker restart in progress"},
+  {"pipeline_id": "bronze_salesforce", "run_time": "2026-05-10T11:15:00", "status": "success", "duration_sec": 251, "row_count": 12100, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "bronze_erp_orders", "run_time": "2026-05-09T02:05:00", "status": "success", "duration_sec": 1790, "row_count": 182000, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "silver_orders", "run_time": "2026-05-09T11:30:00", "status": "success", "duration_sec": 365, "row_count": 40500, "completeness_pct": 99.8, "error_message": null},
+  {"pipeline_id": "gold_daily_revenue", "run_time": "2026-05-09T07:10:00", "status": "success", "duration_sec": 525, "row_count": 1440, "completeness_pct": 100.0, "error_message": null},
+  {"pipeline_id": "bronze_erp_orders", "run_time": "2026-05-08T02:05:00", "status": "failed", "duration_sec": 3600, "row_count": 0, "completeness_pct": 0.0, "error_message": "ERP system maintenance window overran — JDBC connection refused"},
+  {"pipeline_id": "bronze_erp_orders", "run_time": "2026-05-08T06:30:00", "status": "success", "duration_sec": 2100, "row_count": 178000, "completeness_pct": 100.0, "error_message": "Backfill run after maintenance window"},
+  {"pipeline_id": "gold_customer_360", "run_time": "2026-05-09T06:40:00", "status": "success", "duration_sec": 5200, "row_count": 1990000, "completeness_pct": 99.8, "error_message": null},
+  {"pipeline_id": "silver_customers", "run_time": "2026-05-09T11:15:00", "status": "success", "duration_sec": 590, "row_count": 7500, "completeness_pct": 99.2, "error_message": null}
+]

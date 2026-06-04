@@ -1,0 +1,56 @@
+{
+  "bronze_salesforce": {
+    "max_freshness_hours": 1,
+    "min_completeness_pct": 95.0,
+    "max_null_pct": 5.0,
+    "description": "Salesforce data must land within 1 hour"
+  },
+  "bronze_erp_orders": {
+    "max_freshness_hours": 26,
+    "min_completeness_pct": 98.0,
+    "max_null_pct": 2.0,
+    "description": "ERP orders nightly — must complete before business hours"
+  },
+  "bronze_kafka_events": {
+    "max_freshness_hours": 0.25,
+    "min_completeness_pct": 90.0,
+    "max_null_pct": 10.0,
+    "description": "Kafka events are near-real-time — 15 min freshness SLO"
+  },
+  "silver_orders": {
+    "max_freshness_hours": 2,
+    "min_completeness_pct": 98.0,
+    "max_null_pct": 2.0,
+    "description": "Silver orders 2hr freshness SLO"
+  },
+  "silver_customers": {
+    "max_freshness_hours": 3,
+    "min_completeness_pct": 97.0,
+    "max_null_pct": 3.0,
+    "description": "Customer dimension 3hr SLO"
+  },
+  "silver_events": {
+    "max_freshness_hours": 1,
+    "min_completeness_pct": 95.0,
+    "max_null_pct": 5.0,
+    "description": "Events silver 1hr SLO"
+  },
+  "gold_daily_revenue": {
+    "max_freshness_hours": 25,
+    "min_completeness_pct": 100.0,
+    "max_null_pct": 0.0,
+    "description": "Revenue must be available by 07:00 UTC"
+  },
+  "gold_customer_360": {
+    "max_freshness_hours": 27,
+    "min_completeness_pct": 95.0,
+    "max_null_pct": 5.0,
+    "description": "Customer 360 available by 06:00 UTC"
+  },
+  "gold_pipeline_kpis": {
+    "max_freshness_hours": 1,
+    "min_completeness_pct": 100.0,
+    "max_null_pct": 0.0,
+    "description": "Pipeline KPIs refreshed every 30 min"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "average_faithfulness": 0.73,
+  "average_answer_relevance": 0.7,
+  "average_context_precision": 0.64,
+  "average_context_recall": 0.5767,
+  "total_queries": 10,
+  "detail_runs": [
+    {
+      "question": "What is the retry strategy for Bronze ingestion?",
+      "answer": "According to the context, the retry strategy used by the Bronze ingestion pipeline is exponential backoff. [source: bronze_ingestion.md]",
+      "ground_truth": "Bronze ingestion uses an exponential backoff retry strategy with a maximum of 3 retries, an initial delay of 30 seconds, a backoff multiplier of 2x, and failed messages routed to a dead-letter queue.",
+      "faithfulness": 1.0,
+      "answer_relevance": 0.8,
+      "context_precision": 1.0,
+      "context_recall": 0.8
+    },
+    {
+      "question": "Which tables contain PII data?",
+      "answer": "According to ADR-005 [source: architecture_decisions.md], the tables that contain PII (Personally Identifiable Information) data are restricted to specific roles and have different levels of masking. The exact table names are not specified in the provided context, but it is mentioned that Silver layer tables will be masked.\n\nHowever, based on the code snippet from [source: silver_transformation.py], we can see that the `bronze_accounts` table is being cleaned by applying masking rules to certain columns (region, email, phone). It's likely that this table contains PII data.",
+      "ground_truth": "The tables containing PII data are bronze.salesforce_accounts (email, phone), bronze.kafka_events (user_id), bronze.erp_orders (customer_email, billing_address), and silver.customers (email_hash, phone_last4).",
+      "faithfulness": 0.5,
+      "answer_relevance": 0.2,
+      "context_precision": 0.5,
+      "context_recall": 0.5
+    },
+    {
+      "question": "Show me recent pipeline failures",
+      "answer": "To show recent pipeline failures with error messages and timestamps, I would recommend querying the pipeline logs using a command like this:\n\n```bash\nkubectl logs -n data-pipelines -l app=gold-pipeline --tail=100 --previous\n```\n\nThis command uses the `--tail` option to display the last 100 lines of log output, and the `--previous` option to show the previous 100 lines as well. This will give us a good idea of recent pipeline failures.\n\nAlternatively, we could also use a more advanced query to extract specific information from the logs. However, without more context or access to the underlying logging system, I couldn't provide a more tailored solution.\n\n[Source: runbook.md]",
+      "ground_truth": "Recent failures are documented in pipeline_runs.json. For example, the silver_events pipeline failed with a 'JSON decode error: unexpected EOF' error, and gold_daily_revenue failed due to a 'S3 connection timeout'.",
+      "faithfulness": 0.8,
+      "answer_relevance": 0.8,
+      "context_precision": 0.0,
+      "context_recall": 0.0
+    },
+    {
+      "question": "What are the upstream sources of gold.daily_revenue?",
+      "answer": "According to the context, the upstream source of 'gold.daily_revenue' is:\n\n`silver.orders` [source: gold_aggregation.md]\n\nThis is mentioned in the structured catalog metadata for the table 'gold.daily_revenue', under the section \"Upstream sources\".",
+      "ground_truth": "The upstream source of gold.daily_revenue is silver.orders.",
+      "faithfulness": 1.0,
+      "answer_relevance": 0.8,
+      "context_precision": 0.8,
+      "context_recall": 0.6666666666666666
+    },
+    {
+      "question": "How does the silver layer clean null values?",
+      "answer": "Unfortunately, I couldn't find any information about how the Silver layer cleans null values in the provided context documents. The context only mentions that email and phone numbers are masked to `email_hash` and `phone_last4` in the Silver layer [source: silver_transformation.md], but it doesn't provide details on handling missing data points.\n\nIf you'd like, I can try to make an educated guess or suggest a possible approach based on common practices for handling null values in data preprocessing pipelines. However, without explicit information from the source documents, I wouldn't want to provide any potentially incorrect assumptions.",
+      "ground_truth": "In the Silver layer, string nulls are replaced with the 'UNKNOWN' sentinel value, and numeric nulls are replaced with the column median computed over a 30-day window.",
+      "faithfulness": 0.5,
+      "answer_relevance": 0.0,
+      "context_precision": 0.5,
+      "context_recall": 0.8
+    },
+    {
+      "question": "What is the update frequency of bronze.salesforce_accounts?",
+      "answer": "According to [4] source=bronze_ingestion.md, the update frequency of the Bronze ingestion pipeline is every 15 minutes. \n\n[4] source=bronze_ingestion.md \n## Data Sources\n\n| Source System | Connector | Load Type | Schedule |\n|---------------|-----------|-----------|----------|\n| Salesforce CRM | REST API (bulk) | Incremental (updated_at) | Every 15 min |\n\n(Note: the question was internally rewritten to match this format, but the answer remains the same as in [4])",
+      "ground_truth": "The table bronze.salesforce_accounts is updated every 15 minutes.",
+      "faithfulness": 0.5,
+      "answer_relevance": 0.8,
+      "context_precision": 0.8,
+      "context_recall": 0.8
+    },
+    {
+      "question": "What is the target file size for the silver layer partitions?",
+      "answer": "According to the context, the target file size for each partition in the silver layer is specified as 256 MB. [source: silver_transformation.md]",
+      "ground_truth": "The target file size for the silver layer is 256 MB per partition.",
+      "faithfulness": 1.0,
+      "answer_relevance": 1.0,
+      "context_precision": 1.0,
+      "context_recall": 1.0
+    },
+    {
+      "question": "How does the customer dimension handle SCD Type 2 changes?",
+      "answer": "According to [3] source=silver_transformation.py, when updating the Customer dimension using Slowly Changing Dimension Type 2 (SCD Type 2), the following handling rules apply:\n\n* New version created when: `email`, `phone`, `address`, or `tier` changes.\n\nThis means that when any of these fields change for a customer, a new version is created, and the old version becomes inactive. The current version remains active until it itself changes.",
+      "ground_truth": "A new version of the customer record is created when email, phone, address, or tier changes. The effective_from is set to the change timestamp, effective_to is set to 9999-12-31 for current records, and the is_current flag is maintained.",
+      "faithfulness": 0.5,
+      "answer_relevance": 0.8,
+      "context_precision": 0.5,
+      "context_recall": 0.5
+    },
+    {
+      "question": "What is the SLO freshness target for silver.events?",
+      "answer": "According to the documentation, the SLO freshness target for silver.events is less than 1 hour after the upstream source 'bronze.kafka_events'. \n\n[source: silver_transformation.md]",
+      "ground_truth": "The freshness SLO target for silver.events is to run within 1 hour after Bronze data is ingested.",
+      "faithfulness": 0.5,
+      "answer_relevance": 0.8,
+      "context_precision": 0.8,
+      "context_recall": 0.2
+    },
+    {
+      "question": "Where does the raw Salesforce account data land?",
+      "answer": "According to the context provided, the raw Salesforce account data lands in the Bronze layer. [1] source=bronze_ingestion.md states that \"All source data arrives here unchanged \u2014 a faithful copy of what upstream systems sent us.\" This indicates that the raw data is stored in the Bronze layer before it undergoes any transformations or cleaning steps.",
+      "ground_truth": "Raw Salesforce account data lands in the Bronze layer, specifically in the table bronze.salesforce_accounts.",
+      "faithfulness": 1.0,
+      "answer_relevance": 1.0,
+      "context_precision": 0.5,
+      "context_recall": 0.5
+    }
+  ]
+}

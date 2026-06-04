@@ -1,0 +1,26 @@
+{
+  "nodes": [
+    {"id": "bronze.salesforce_accounts", "layer": "bronze"},
+    {"id": "bronze.erp_orders", "layer": "bronze"},
+    {"id": "bronze.kafka_events", "layer": "bronze"},
+    {"id": "silver.customers", "layer": "silver"},
+    {"id": "silver.orders", "layer": "silver"},
+    {"id": "silver.events", "layer": "silver"},
+    {"id": "gold.daily_revenue", "layer": "gold"},
+    {"id": "gold.customer_360", "layer": "gold"},
+    {"id": "gold.pipeline_kpis", "layer": "gold"},
+    {"id": "meta.pipeline_watermarks", "layer": "meta"}
+  ],
+  "edges": [
+    {"source": "bronze.salesforce_accounts", "target": "silver.customers", "transform": "SCD Type 2 + PII masking"},
+    {"source": "bronze.erp_orders", "target": "silver.orders", "transform": "Deduplication + null fill"},
+    {"source": "bronze.kafka_events", "target": "silver.events", "transform": "Deduplication + customer enrichment"},
+    {"source": "silver.orders", "target": "gold.daily_revenue", "transform": "Date aggregation by region + category"},
+    {"source": "silver.customers", "target": "gold.customer_360", "transform": "Join + LTV calculation"},
+    {"source": "silver.orders", "target": "gold.customer_360", "transform": "Order history join"},
+    {"source": "silver.events", "target": "gold.customer_360", "transform": "Behavioural event join"},
+    {"source": "silver.orders", "target": "gold.pipeline_kpis", "transform": "Pipeline observability metrics"},
+    {"source": "meta.pipeline_watermarks", "target": "bronze.erp_orders", "transform": "Watermark-based incremental load"},
+    {"source": "meta.pipeline_watermarks", "target": "bronze.salesforce_accounts", "transform": "Watermark-based incremental load"}
+  ]
+}

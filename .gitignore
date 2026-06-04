@@ -1,0 +1,127 @@
+# ==========================================
+# Python Bytecode & Cache
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyo
+*.pyd
+
+# ==========================================
+# Python Distribution & Build
+# ==========================================
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.spec
+
+# ==========================================
+# Virtual Environments
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==========================================
+# Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+.env.backup
+.env.bak
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa*
+secrets.json
+
+# ==========================================
+# Databases & Local Stores
+# ==========================================
+chroma_db/
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# Testing & Code Quality Caches
+# ==========================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.tox/
+.nox/
+.coverage
+.coverage.*
+*.cover
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# ==========================================
+# Jupyter Notebooks Checkpoints
+# ==========================================
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ==========================================
+# IDEs & Editor Configuration
+# ==========================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*~
+*.swp
+*.swo
+
+# ==========================================
+# Operating System Metadata
+# ==========================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+._*
+
+# ==========================================
+# Streamlit & UI Cache
+# ==========================================
+.streamlit/
+

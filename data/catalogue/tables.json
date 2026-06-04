@@ -1,0 +1,189 @@
+[
+  {
+    "name": "bronze.salesforce_accounts",
+    "description": "Raw Salesforce CRM account records. Unmodified landing zone data.",
+    "layer": "bronze",
+    "owner": "data-engineering",
+    "pii_tags": ["email", "phone"],
+    "update_frequency": "every_15min",
+    "expected_row_count": 250000,
+    "last_updated": "2024-05-10T12:00:00",
+    "columns": [
+      {"name": "account_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "account_name", "type": "VARCHAR(256)", "pii": false, "nullable": true},
+      {"name": "email", "type": "VARCHAR(256)", "pii": true, "nullable": true},
+      {"name": "phone", "type": "VARCHAR(20)", "pii": true, "nullable": true},
+      {"name": "region", "type": "VARCHAR(64)", "pii": false, "nullable": true},
+      {"name": "_ingested_at", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "_source_system", "type": "VARCHAR(64)", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "bronze.kafka_events",
+    "description": "Raw event stream from Kafka. Streaming ingestion with 1-minute micro-batches.",
+    "layer": "bronze",
+    "owner": "data-engineering",
+    "pii_tags": ["user_id"],
+    "update_frequency": "continuous",
+    "expected_row_count": 5000000,
+    "last_updated": "2024-05-10T12:00:00",
+    "columns": [
+      {"name": "event_id", "type": "VARCHAR(128)", "pii": false, "nullable": false},
+      {"name": "event_type", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "user_id", "type": "VARCHAR(64)", "pii": true, "nullable": true},
+      {"name": "event_timestamp", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "payload", "type": "TEXT", "pii": false, "nullable": true},
+      {"name": "_ingested_at", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "_source_system", "type": "VARCHAR(64)", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "bronze.erp_orders",
+    "description": "Full snapshot from PostgreSQL ERP system. Nightly load.",
+    "layer": "bronze",
+    "owner": "data-engineering",
+    "pii_tags": ["customer_email", "billing_address"],
+    "update_frequency": "nightly",
+    "expected_row_count": 1200000,
+    "last_updated": "2024-05-10T02:00:00",
+    "columns": [
+      {"name": "order_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "customer_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "customer_email", "type": "VARCHAR(256)", "pii": true, "nullable": true},
+      {"name": "order_date", "type": "DATE", "pii": false, "nullable": false},
+      {"name": "total_amount", "type": "DECIMAL(18,4)", "pii": false, "nullable": false},
+      {"name": "status", "type": "VARCHAR(32)", "pii": false, "nullable": false},
+      {"name": "billing_address", "type": "TEXT", "pii": true, "nullable": true},
+      {"name": "_ingested_at", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "_source_system", "type": "VARCHAR(64)", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "silver.orders",
+    "description": "Cleaned and deduplicated order data. SCD Type 1 for order status updates.",
+    "layer": "silver",
+    "owner": "data-engineering",
+    "pii_tags": [],
+    "update_frequency": "hourly",
+    "expected_row_count": 500000,
+    "last_updated": "2024-05-10T11:00:00",
+    "columns": [
+      {"name": "order_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "customer_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "order_date", "type": "DATE", "pii": false, "nullable": false},
+      {"name": "total_amount", "type": "DECIMAL(18,4)", "pii": false, "nullable": false},
+      {"name": "status", "type": "VARCHAR(32)", "pii": false, "nullable": false},
+      {"name": "region", "type": "VARCHAR(64)", "pii": false, "nullable": true},
+      {"name": "updated_at", "type": "TIMESTAMP", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "silver.customers",
+    "description": "Deduplicated customer dimension. SCD Type 2 with full history preserved.",
+    "layer": "silver",
+    "owner": "data-engineering",
+    "pii_tags": ["email_hash", "phone_last4"],
+    "update_frequency": "hourly",
+    "expected_row_count": 2000000,
+    "last_updated": "2024-05-10T11:00:00",
+    "columns": [
+      {"name": "customer_sk", "type": "BIGINT", "pii": false, "nullable": false},
+      {"name": "customer_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "email_hash", "type": "VARCHAR(128)", "pii": true, "nullable": true},
+      {"name": "phone_last4", "type": "VARCHAR(4)", "pii": true, "nullable": true},
+      {"name": "region", "type": "VARCHAR(64)", "pii": false, "nullable": true},
+      {"name": "tier", "type": "VARCHAR(32)", "pii": false, "nullable": true},
+      {"name": "effective_from", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "effective_to", "type": "TIMESTAMP", "pii": false, "nullable": true},
+      {"name": "is_current", "type": "BOOLEAN", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "silver.events",
+    "description": "Deduplicated event stream with enriched metadata from customer dimension.",
+    "layer": "silver",
+    "owner": "data-engineering",
+    "pii_tags": [],
+    "update_frequency": "every_15min",
+    "expected_row_count": 5000000,
+    "last_updated": "2024-05-10T11:45:00",
+    "columns": [
+      {"name": "event_id", "type": "VARCHAR(128)", "pii": false, "nullable": false},
+      {"name": "event_type", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "customer_id", "type": "VARCHAR(64)", "pii": false, "nullable": true},
+      {"name": "event_date", "type": "DATE", "pii": false, "nullable": false},
+      {"name": "event_timestamp", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "session_id", "type": "VARCHAR(128)", "pii": false, "nullable": true}
+    ]
+  },
+  {
+    "name": "gold.daily_revenue",
+    "description": "Daily revenue aggregation by region and product category. Primary BI source.",
+    "layer": "gold",
+    "owner": "analytics",
+    "pii_tags": [],
+    "update_frequency": "daily",
+    "expected_row_count": 1500,
+    "last_updated": "2024-05-10T07:00:00",
+    "columns": [
+      {"name": "report_date", "type": "DATE", "pii": false, "nullable": false},
+      {"name": "region", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "product_category", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "gross_revenue_usd", "type": "DECIMAL(18,4)", "pii": false, "nullable": false},
+      {"name": "net_revenue_usd", "type": "DECIMAL(18,4)", "pii": false, "nullable": false},
+      {"name": "order_count", "type": "INTEGER", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "gold.customer_360",
+    "description": "Unified customer view joining orders, events, and support history.",
+    "layer": "gold",
+    "owner": "analytics",
+    "pii_tags": [],
+    "update_frequency": "nightly",
+    "expected_row_count": 2000000,
+    "last_updated": "2024-05-10T06:30:00",
+    "columns": [
+      {"name": "customer_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "region", "type": "VARCHAR(64)", "pii": false, "nullable": true},
+      {"name": "tier", "type": "VARCHAR(32)", "pii": false, "nullable": true},
+      {"name": "total_lifetime_value", "type": "DECIMAL(18,4)", "pii": false, "nullable": true},
+      {"name": "total_orders", "type": "INTEGER", "pii": false, "nullable": false},
+      {"name": "last_order_date", "type": "DATE", "pii": false, "nullable": true},
+      {"name": "churn_risk_score", "type": "FLOAT", "pii": false, "nullable": true}
+    ]
+  },
+  {
+    "name": "gold.pipeline_kpis",
+    "description": "Pipeline observability metrics: success rates, SLA adherence, data freshness.",
+    "layer": "gold",
+    "owner": "data-engineering",
+    "pii_tags": [],
+    "update_frequency": "every_30min",
+    "expected_row_count": 500,
+    "last_updated": "2024-05-10T11:30:00",
+    "columns": [
+      {"name": "pipeline_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "report_date", "type": "DATE", "pii": false, "nullable": false},
+      {"name": "success_rate", "type": "FLOAT", "pii": false, "nullable": false},
+      {"name": "avg_duration_sec", "type": "FLOAT", "pii": false, "nullable": false},
+      {"name": "sla_adherence_pct", "type": "FLOAT", "pii": false, "nullable": false}
+    ]
+  },
+  {
+    "name": "meta.pipeline_watermarks",
+    "description": "Control table tracking last successful watermark per pipeline for incremental loads.",
+    "layer": "meta",
+    "owner": "data-engineering",
+    "pii_tags": [],
+    "update_frequency": "per_run",
+    "expected_row_count": 20,
+    "last_updated": "2024-05-10T12:00:00",
+    "columns": [
+      {"name": "pipeline_id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+      {"name": "last_ingested_at", "type": "TIMESTAMP", "pii": false, "nullable": false},
+      {"name": "last_run_id", "type": "VARCHAR(128)", "pii": false, "nullable": false},
+      {"name": "updated_at", "type": "TIMESTAMP", "pii": false, "nullable": false}
+    ]
+  }
+]
