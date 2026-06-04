@@ -216,24 +216,32 @@ def _mock_llm_response(
 
     has_tool_run = any(m.get("role") == "tool" for m in messages)
 
+    user_lower = user_prompt.lower()
+
     # Construct the mock answer
-    if context or has_tool_run:
-        # Extract table details or document facts
-        if "bronze_ingestion" in context.lower() or "retry" in user_prompt.lower():
-            ans = "Based on the pipeline documentation, the **Bronze layer ingestion pipeline** uses an **exponential backoff** retry strategy:\n- **Max retries**: 3\n- **Initial delay**: 30 seconds\n- **Backoff multiplier**: 2× (delay doubles to 60s, then 120s)\n- **Dead-letter queue**: Failed records are routed to `s3://bronze-dlq/` for audit and replay.\n- **Circuit breaker**: After 5 consecutive failures, the pipeline pauses for 10 minutes.\n\n[source: bronze_ingestion.md]"
-        elif "pii" in user_prompt.lower() or "sensitive" in user_prompt.lower():
-            ans = "The tables containing sensitive or PII fields in the platform are:\n1. **bronze.salesforce_accounts**: Contains raw `email` and `phone` columns.\n2. **bronze.kafka_events**: Tracks `user_id` in the event payload.\n3. **bronze.erp_orders**: Stores `customer_email` and `billing_address`.\n4. **silver.customers**: Stores masked values (`email_hash` and `phone_last4`) to ensure security compliance.\n\n[source: tables.json]"
-        elif "status" in user_prompt.lower() or "health" in user_prompt.lower() or "run" in user_prompt.lower():
-            ans = "According to get_pipeline_status, your pipelines are in a healthy state:\n- **silver_events**: success (resolved user_id NullPointerException)\n- **gold_customer_360**: success (resolved churn score model timeout)\n- **bronze_salesforce**: success\n- **bronze_erp_orders**: success\n\n[source: get_pipeline_status]"
-        elif "failure" in user_prompt.lower() or "failed" in user_prompt.lower():
-            ans = "According to pipeline operational logs, there are recent failures in the last 24 hours:\n- **silver_events**: Failed with `JSON decode error: unexpected EOF` during behavioral enrichment.\n- **gold_daily_revenue**: Failed with `S3 connection timeout` during nightly aggregation.\n\n[source: pipeline_runs.json]"
-        elif "lineage" in user_prompt.lower() or "upstream" in user_prompt.lower() or "downstream" in user_prompt.lower():
-            ans = "Table lineage analysis shows that **gold.daily_revenue** aggregates order data by region and categories. Its direct upstream source is **silver.orders**, which in turn consumes raw transactions from the raw ERP source **bronze.erp_orders**.\n\n[source: lineage.json]"
-        elif "quality" in user_prompt.lower() or "check" in user_prompt.lower():
-            ans = "Data quality scan completed for the requested table. Overall status: **PASS (Healthy)**.\n- **Null percentage violations**: 0 (all fields within tolerance thresholds)\n- **Schema conformance**: 100% matched\n- **Row count anomalies**: No drift detected (rolling average is within expected bounds).\n\n[source: quality_checker]"
-        else:
-            # General RAG synthesis
-            ans = f"Synthesized response for: '{user_prompt}'.\nBased on data catalog and documentation files, the requested data tables are defined in the catalog and downstream processing layers conform to Bronze-Silver-Gold standards. Transformations run via Spark Delta Lake tables."
+    if "retry" in user_lower or "backoff" in user_lower:
+        ans = "The **Bronze ingestion pipeline** retry strategy uses **exponential backoff**:\n- **Max retries**: 3\n- **Initial delay**: 30 seconds\n- **Backoff multiplier**: 2x (delay doubles to 60s, then 120s)\n- **DLQ**: Failed messages are routed to `s3://bronze-dlq/` for dead-letter queuing.\n\n[source: bronze_ingestion.md]"
+    elif "schedule" in user_lower or "often" in user_lower or "frequency" in user_lower:
+        ans = "Here are the update frequencies for the data pipelines:\n- **bronze.salesforce_accounts**: Every 15 minutes\n- **bronze.kafka_events**: Continuous (streaming)\n- **bronze.erp_orders**: Nightly\n- **silver.orders** & **silver.customers**: Hourly\n- **silver.events**: Every 15 minutes\n- **gold.daily_revenue**: Daily\n- **gold.customer_360**: Nightly\n\n[source: tables.json]"
+    elif "bronze" in user_lower and "table" in user_lower:
+        ans = "The tables present in the **Bronze layer** are:\n1. **`bronze.salesforce_accounts`**: Raw Salesforce CRM account records.\n2. **`bronze.kafka_events`**: Raw streaming event log from Kafka.\n3. **`bronze.erp_orders`**: Raw transactional order records from the ERP Postgres DB.\n\n[source: tables.json]"
+    elif "silver" in user_lower and "table" in user_lower:
+        ans = "The tables present in the **Silver layer** are:\n1. **`silver.orders`**: Cleaned and deduplicated order records.\n2. **`silver.customers`**: Deduplicated customer dimension (managed via SCD Type 2).\n3. **`silver.events`**: Deduplicated event stream with customer metadata enrichment.\n\n[source: tables.json]"
+    elif "gold" in user_lower and "table" in user_lower:
+        ans = "The tables present in the **Gold layer** are:\n1. **`gold.daily_revenue`**: Daily revenue aggregated by region and category.\n2. **`gold.customer_360`**: Customer behavioral profiles and ML churn scores.\n3. **`gold.pipeline_kpis`**: SLA adherence and pipeline performance metrics.\n\n[source: tables.json]"
+    elif "pii" in user_lower or "sensitive" in user_lower:
+        ans = "The tables containing sensitive or PII fields in the platform are:\n1. **bronze.salesforce_accounts**: Contains raw `email` and `phone` columns.\n2. **bronze.kafka_events**: Tracks `user_id` in the event payload.\n3. **bronze.erp_orders**: Stores `customer_email` and `billing_address`.\n4. **silver.customers**: Stores masked values (`email_hash` and `phone_last4`) to ensure security compliance.\n\n[source: tables.json]"
+    elif "status" in user_lower or "health" in user_lower or "run" in user_lower:
+        ans = "According to get_pipeline_status, your pipelines are in a healthy state:\n- **silver_events**: success (resolved user_id NullPointerException)\n- **gold_customer_360**: success (resolved churn score model timeout)\n- **bronze_salesforce**: success\n- **bronze_erp_orders**: success\n\n[source: get_pipeline_status]"
+    elif "failure" in user_lower or "failed" in user_lower:
+        ans = "According to pipeline operational logs, there are recent failures in the last 24 hours:\n- **silver_events**: Failed with `JSON decode error: unexpected EOF` during behavioral enrichment.\n- **gold_daily_revenue**: Failed with `S3 connection timeout` during nightly aggregation.\n\n[source: pipeline_runs.json]"
+    elif "lineage" in user_lower or "upstream" in user_lower or "downstream" in user_lower:
+        ans = "Table lineage analysis shows that **gold.daily_revenue** aggregates order data by region and categories. Its direct upstream source is **silver.orders**, which in turn consumes raw transactions from the raw ERP source **bronze.erp_orders**.\n\n[source: lineage.json]"
+    elif "quality" in user_lower or "check" in user_lower:
+        ans = "Data quality scan completed for the requested table. Overall status: **PASS (Healthy)**.\n- **Null percentage violations**: 0 (all fields within tolerance thresholds)\n- **Schema conformance**: 100% matched\n- **Row count anomalies**: No drift detected (rolling average is within expected bounds).\n\n[source: quality_checker]"
+    elif context or has_tool_run:
+        # Fallback to general RAG synthesis if context exists
+        ans = f"Synthesized response for: '{user_prompt}'.\nBased on data catalog and documentation files, the requested data tables conform to Bronze-Silver-Gold standards. Transformations run via Spark Delta Lake tables."
     else:
         # Conversational fallback
         ans = f"Hi! I am your Data Engineering Assistant. I can help you search the data catalogue, traverse table lineage, check pipeline runs status, or ask questions about ETL codebase. What would you like to check today?"
