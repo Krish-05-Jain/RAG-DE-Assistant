@@ -214,13 +214,17 @@ def _mock_llm_response(
             context = content_str
             break
 
+    has_tool_run = any(m.get("role") == "tool" for m in messages)
+
     # Construct the mock answer
-    if context:
+    if context or has_tool_run:
         # Extract table details or document facts
         if "bronze_ingestion" in context.lower() or "retry" in user_prompt.lower():
             ans = "Based on the pipeline documentation, the **Bronze layer ingestion pipeline** uses an **exponential backoff** retry strategy:\n- **Max retries**: 3\n- **Initial delay**: 30 seconds\n- **Backoff multiplier**: 2× (delay doubles to 60s, then 120s)\n- **Dead-letter queue**: Failed records are routed to `s3://bronze-dlq/` for audit and replay.\n- **Circuit breaker**: After 5 consecutive failures, the pipeline pauses for 10 minutes.\n\n[source: bronze_ingestion.md]"
         elif "pii" in user_prompt.lower() or "sensitive" in user_prompt.lower():
             ans = "The tables containing sensitive or PII fields in the platform are:\n1. **bronze.salesforce_accounts**: Contains raw `email` and `phone` columns.\n2. **bronze.kafka_events**: Tracks `user_id` in the event payload.\n3. **bronze.erp_orders**: Stores `customer_email` and `billing_address`.\n4. **silver.customers**: Stores masked values (`email_hash` and `phone_last4`) to ensure security compliance.\n\n[source: tables.json]"
+        elif "status" in user_prompt.lower() or "health" in user_prompt.lower() or "run" in user_prompt.lower():
+            ans = "According to get_pipeline_status, your pipelines are in a healthy state:\n- **silver_events**: success (resolved user_id NullPointerException)\n- **gold_customer_360**: success (resolved churn score model timeout)\n- **bronze_salesforce**: success\n- **bronze_erp_orders**: success\n\n[source: get_pipeline_status]"
         elif "failure" in user_prompt.lower() or "failed" in user_prompt.lower():
             ans = "According to pipeline operational logs, there are recent failures in the last 24 hours:\n- **silver_events**: Failed with `JSON decode error: unexpected EOF` during behavioral enrichment.\n- **gold_daily_revenue**: Failed with `S3 connection timeout` during nightly aggregation.\n\n[source: pipeline_runs.json]"
         elif "lineage" in user_prompt.lower() or "upstream" in user_prompt.lower() or "downstream" in user_prompt.lower():
