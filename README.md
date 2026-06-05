@@ -1,7 +1,8 @@
 # 🤖 DE-AI Assistant — RAG-Powered Data Engineering Assistant
 
 > **Capstone Project** — GenAI for Data Engineers Bootcamp (15 Days)  
-> Powered by **llama-3.1-8b-instant** via Groq API · ChromaDB · Sentence-Transformers · Streamlit
+> **Live App**: [rag-de-assistant.streamlit.app](https://rag-de-assistant.streamlit.app/)  
+> Powered by **llama3.1:8b** via Ollama (or **llama-3.1-8b-instant** via Groq API) · ChromaDB · Sentence-Transformers · Streamlit
 
 ---
 
@@ -18,6 +19,7 @@ DE-AI Assistant is a conversational AI that helps data engineers with their dail
 | **Health Monitoring** | "Show me recent pipeline failures" |
 | **Agentic Quality Checks** | "Run a quality check on the orders table" |
 | **Lineage Traversal** | "What are the upstream sources of gold.daily_revenue?" |
+| **Pipeline Configurator** | "Register a new table and upload its runbook/code" |
 
 ---
 
@@ -32,10 +34,10 @@ User (Streamlit Multi-Tab Dashboard)
 │  (app/agents/orchestrator)│
 └─────────────────────────┘
         │ routes to
-   ┌────┼────────────────────────────┐
-   ▼    ▼             ▼              ▼
-Pipeline Q&A  Catalogue Explorer  Health Monitor  Quality Checker
-(Hybrid CRAG) (JSON search)       (JSON metrics)  (Agentic action)
+   ┌────┼────────────────────────────┬────────────────────────────┐
+   ▼    ▼             ▼              ▼                            ▼
+Pipeline Q&A  Catalogue Explorer  Health Monitor  Quality Checker  Pipeline Configurator
+(Hybrid CRAG) (JSON search)       (JSON metrics)  (Agentic action) (Write configs/runbooks)
    │
    ▼
 Corrective RAG Pipeline (CRAG)
@@ -96,14 +98,15 @@ de-ai-assistant/
 ├── app/
 │   ├── config.py              # Pydantic settings (reads .env)
 │   ├── main.py                # Streamlit entry point (delegates to UI)
-│   ├── main_v1_backup.py      # Original simple chat UI backup
 │   ├── agents/
 │   │   ├── orchestrator.py    # Tool-calling orchestrator with Context Map
 │   │   ├── quality_agent.py   # Quality service adapter
 │   │   └── tools/             # Core LLM tools (health, lineage, QA)
 │   ├── catalogue/             # Data catalogue UI shims
 │   ├── pipeline/              # Pipeline operations UI shims
-│   ├── services/              # Chat service UI shims
+│   ├── services/              # Chat service and configurator shims
+│   │   ├── chat_service.py
+│   │   └── pipeline_configurator.py
 │   ├── observability/         # Lightweight metrics stub
 │   ├── rag/
 │   │   ├── vectorstore.py     # ChromaDB setup
@@ -125,10 +128,11 @@ de-ai-assistant/
 ├── tests/
 │   ├── test_rag.py
 │   ├── test_tools.py
-│   └── test_health.py
+│   ├── test_health.py
+│   └── test_pipeline_configurator.py
 ├── .env.example
 ├── .gitignore
-└── requirements.txt
+├── requirements.txt
 ```
 
 ---
@@ -191,7 +195,7 @@ python -m pytest tests/test_health.py -v
 
 ## 🎓 Bootcamp Coverage Map
 
-Days 1–15 all mapped — see `implementation_plan.md` for full details.
+Days 1–15 all mapped — see system design documents for full details.
 
 ---
 
