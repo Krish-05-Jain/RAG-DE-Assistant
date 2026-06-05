@@ -11,6 +11,14 @@ from app.services.chat_service import ChatService
 from app.pipeline.service import PipelineService
 from app.catalogue.explorer import DataCatalogueExplorer
 from app.agents.quality_agent import QualityAgent
+from app.services.pipeline_configurator import (
+    register_table_metadata,
+    register_lineage,
+    register_slo,
+    save_runbook_documentation,
+    save_etl_code,
+    trigger_indexing,
+)
 
 # ============================================================================
 # UTILITY FUNCTIONS
@@ -215,13 +223,14 @@ st.markdown(
 # ============================================================================
 # MAIN NAVIGATION
 # ============================================================================
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "💬 Chat Assistant",
     "🔄 Pipeline Operations",
     "📋 Data Catalogue",
     "🔍 Quality Checks",
     "📊 Monitoring Dashboard",
-    "📈 RAGAS Evaluation"
+    "📈 RAGAS Evaluation",
+    "🛠️ Pipeline Configurator"
 ])
 
 # ============================================================================
@@ -739,6 +748,208 @@ with tab6:
             st.error(f"Error loading evaluation file: {e}")
     else:
         st.info("No evaluation runs found. Click 'Run Live Evaluation Batch' above to execute the RAGAS evaluation suite.")
+
+# ============================================================================
+# TAB 7: PIPELINE CONFIGURATOR
+# ============================================================================
+with tab7:
+    st.header("🛠️ Pipeline Configurator")
+    st.write("Register new tables, configure lineage mappings, set SLO bounds, add code/documentation files, and trigger indexing directly from the UI.")
+
+    st.markdown("### 1. Register Table & Metadata")
+    meta_col1, meta_col2 = st.columns(2)
+    
+    with meta_col1:
+        table_name = st.text_input(
+            "Table Name (schema.table)",
+            placeholder="e.g. silver.user_purchases",
+            help="Specify table name with layer prefix, e.g. bronze.raw_orders, silver.orders, gold.daily_revenue"
+        )
+        layer_option = st.selectbox(
+            "Layer",
+            ["bronze", "silver", "gold", "meta"],
+            help="Data layer of this table"
+        )
+        owner_name = st.text_input(
+            "Owner Group",
+            placeholder="e.g. data-engineering, analytics, business-intelligence",
+            help="Owner of this table"
+        )
+        update_freq_option = st.selectbox(
+            "Update Frequency",
+            ["hourly", "daily", "nightly", "every_15min", "every_30min", "continuous", "per_run"],
+            help="Expected frequency of pipeline runs"
+        )
+
+    with meta_col2:
+        table_desc = st.text_area(
+            "Table Description",
+            placeholder="Explain the purpose, source systems, or downstream usage of this table...",
+            help="A detailed description to assist the semantic search RAG model"
+        )
+        expected_rows = st.number_input(
+            "Expected Row Count",
+            min_value=0,
+            value=10000,
+            step=1000,
+            help="Expected scale of table rows"
+        )
+        
+    st.markdown("**Columns Definition (JSON List of Objects)**")
+    default_columns_json = """[
+  {"name": "id", "type": "VARCHAR(64)", "pii": false, "nullable": false},
+  {"name": "created_at", "type": "TIMESTAMP", "pii": false, "nullable": false},
+  {"name": "email", "type": "VARCHAR(256)", "pii": true, "nullable": true}
+]"""
+    columns_json_str = st.text_area(
+        "Columns JSON Schema",
+        value=default_columns_json,
+        height=150,
+        help="Specify the column names, types, PII status, and nullability as a JSON list"
+    )
+
+    st.markdown("---")
+    st.markdown("### 2. Configure Lineage & Transformation")
+    
+    # Try fetching existing tables for upstream multiselect
+    existing_tables_list = []
+    try:
+        existing_tables_list = list(catalogue_explorer.catalogue.get("tables", {}).keys())
+    except Exception:
+        pass
+        
+    upstream_selected = st.multiselect(
+        "Select Upstream/Parent Tables",
+        options=existing_tables_list,
+        help="Upstream tables this table depends on"
+    )
+    
+    transformation_description = st.text_area(
+        "Transformation Logic Summary",
+        placeholder="e.g. Deduplication via primary key and join with user profiles...",
+        help="Describe what modifications/joins are made"
+    )
+
+    st.markdown("---")
+    st.markdown("### 3. Configure SLO Targets (Optional)")
+    
+    with st.expander("⏱️ SLO Metric Settings", expanded=False):
+        has_slo = st.checkbox("Register SLO Config", value=False)
+        
+        slo_col1, slo_col2 = st.columns(2)
+        with slo_col1:
+            max_freshness = st.number_input("Max Freshness (Hours)", min_value=0.1, value=2.0, step=0.5)
+            min_completeness = st.number_input("Min Completeness (%)", min_value=0.0, max_value=100.0, value=99.0, step=0.5)
+        with slo_col2:
+            max_null_pct = st.number_input("Max Null Percentage (%)", min_value=0.0, max_value=100.0, value=2.0, step=0.5)
+            slo_desc = st.text_input("SLO Description", placeholder="e.g. Ingestion SLA, Completeness SLA")
+
+    st.markdown("---")
+    st.markdown("### 4. Add Documentation & Code Files (Optional)")
+    
+    doc_col1, doc_col2 = st.columns(2)
+    with doc_col1:
+        st.markdown("**Markdown Runbook / SOP**")
+        doc_filename = st.text_input("Runbook Filename", placeholder="e.g. user_purchases_runbook.md")
+        doc_content = st.text_area("Runbook Content (Markdown)", placeholder="# SOP: Processing User Purchases\n\nSteps to run: ...", height=200)
+        
+    with doc_col2:
+        st.markdown("**ETL Code File**")
+        code_filename = st.text_input("ETL Filename", placeholder="e.g. user_purchases.py or user_purchases.sql")
+        code_content = st.text_area("ETL Script / Query Content", placeholder="def transform():\n    pass", height=200)
+
+    st.markdown("---")
+    st.markdown("### 5. Save Configuration")
+    
+    import time
+    if st.button("💾 Save Pipeline Configuration", type="primary", use_container_width=True):
+        if not table_name:
+            st.error("❌ Table Name is required.")
+        else:
+            try:
+                # Parse columns JSON
+                try:
+                    cols_list = json.loads(columns_json_str)
+                    if not isinstance(cols_list, list):
+                        raise ValueError("Must be a list of objects")
+                except Exception as json_err:
+                    st.error(f"❌ Invalid Columns JSON: {json_err}")
+                    cols_list = None
+                
+                if cols_list is not None:
+                    with st.spinner("Writing configuration files..."):
+                        # Extract PII columns for tagging
+                        pii_tags = [c["name"] for c in cols_list if c.get("pii")]
+                        
+                        # 1. Save Table Metadata
+                        meta_payload = {
+                            "name": table_name,
+                            "description": table_desc,
+                            "layer": layer_option,
+                            "owner": owner_name,
+                            "pii_tags": pii_tags,
+                            "update_frequency": update_freq_option,
+                            "expected_row_count": int(expected_rows),
+                            "last_updated": pd.Timestamp.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                            "columns": cols_list
+                        }
+                        register_table_metadata(meta_payload)
+                        
+                        # 2. Save Lineage
+                        register_lineage(
+                            table_id=table_name,
+                            layer=layer_option,
+                            upstream_tables=upstream_selected,
+                            transform_desc=transformation_description
+                        )
+                        
+                        # 3. Save SLO if enabled
+                        if has_slo:
+                            # Generate a matching pipeline_id by replacing . with _
+                            pipeline_id = table_name.replace(".", "_")
+                            slo_payload = {
+                                "max_freshness_hours": max_freshness,
+                                "min_completeness_pct": min_completeness,
+                                "max_null_pct": max_null_pct,
+                                "description": slo_desc or f"SLO targets for {table_name}"
+                            }
+                            register_slo(pipeline_id, slo_payload)
+                        
+                        # 4. Save Doc File
+                        if doc_filename and doc_content:
+                            save_runbook_documentation(doc_filename, doc_content)
+                            
+                        # 5. Save Code File
+                        if code_filename and code_content:
+                            save_etl_code(code_filename, code_content)
+                            
+                        # Refresh catalogue explorer cache
+                        catalogue_explorer.scan_data_layers()
+                        
+                        st.success("✅ Configuration saved successfully!")
+                        st.toast("Pipeline configuration registered!")
+                        time.sleep(1)
+                        st.rerun()
+            except Exception as save_err:
+                st.error(f"❌ Failed to save configuration: {save_err}")
+
+    st.markdown("---")
+    st.markdown("### 6. Index & Optimize Search Corpus")
+    st.info("💡 Newly registered tables, lineage nodes, runbooks, and code files must be processed by the Corrective RAG indexing pipeline before they can be retrieved by the Chat Assistant.")
+    
+    if st.button("⚡ Trigger Ingestion Pipeline", use_container_width=True):
+        with st.spinner("Processing & embedding document chunks... (this may take a few seconds)"):
+            try:
+                import time as t_mod
+                s_t = t_mod.time()
+                total_chunks = trigger_indexing()
+                elapsed_time = t_mod.time() - s_t
+                st.success(f"✅ Ingestion successful! Indexed {total_chunks} chunks in {elapsed_time:.2f} seconds.")
+                st.balloons()
+                # Reload catalogue cache
+                catalogue_explorer.scan_data_layers()
+            except Exception as index_err:
+                st.error(f"❌ Indexing failed: {index_err}")
 
 # ============================================================================
 # FOOTER
